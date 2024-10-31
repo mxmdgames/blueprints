@@ -1,224 +1,431 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Simple Blueprint Creator</title>
+    <title>Professional Blueprint Creator</title>
     <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            margin: 0;
-            padding: 20px;
-            background: #f0f0f0;
+            background: var(--gray-100);
+            color: var(--gray-800);
+            line-height: 1.5;
         }
-        .container {
-            display: flex;
+
+        .app-container {
+            display: grid;
+            grid-template-columns: 280px 1fr 280px;
+            min-height: 100vh;
             gap: 20px;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        .tools {
-            background: white;
             padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            width: 200px;
         }
+
+        .panel {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            padding: 20px;
+        }
+
+        .tools-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .panel-section {
+            border-bottom: 1px solid var(--gray-200);
+            padding-bottom: 16px;
+        }
+
+        .panel-section:last-child {
+            border-bottom: none;
+        }
+
+        .tool-group {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+
+        .tool-button {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            padding: 12px;
+            background: var(--gray-100);
+            border: 1px solid var(--gray-200);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .tool-button:hover {
+            background: var(--gray-200);
+        }
+
+        .tool-button.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary-dark);
+        }
+
+        .tool-button svg {
+            width: 24px;
+            height: 24px;
+        }
+
         .canvas-container {
+            position: relative;
             background: white;
-            padding: 20px;
             border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            flex-grow: 1;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow: hidden;
         }
+
         canvas {
-            background: #fff;
-            border: 1px solid #ccc;
+            background: white;
         }
-        button {
-            width: 100%;
+
+        .canvas-controls {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            gap: 8px;
+            background: white;
             padding: 8px;
-            margin: 5px 0;
-            background: #007bff;
+            border-radius: 6px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+
+        .control-button {
+            padding: 8px;
+            background: var(--gray-100);
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .control-button:hover {
+            background: var(--gray-200);
+        }
+
+        .properties-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        label {
+            font-size: 14px;
+            color: var(--gray-700);
+        }
+
+        input {
+            padding: 8px;
+            border: 1px solid var(--gray-300);
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .dimension-label {
+            position: absolute;
+            background: white;
+            padding: 2px 4px;
+            border-radius: 4px;
+            font-size: 12px;
+            pointer-events: none;
+        }
+
+        .action-button {
+            padding: 8px 16px;
+            background: var(--primary);
             color: white;
             border: none;
             border-radius: 4px;
             cursor: pointer;
+            font-size: 14px;
+            transition: background 0.2s;
         }
-        button:hover {
-            background: #0056b3;
+
+        .action-button:hover {
+            background: var(--primary-dark);
         }
-        input {
-            width: 100%;
-            padding: 8px;
-            margin: 5px 0;
-            border: 1px solid #ccc;
+
+        .status-bar {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: white;
+            padding: 8px 12px;
             border-radius: 4px;
-        }
-        .active {
-            background: #0056b3;
+            font-size: 12px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="tools">
-            <h2>Tools</h2>
-            <button id="rectangleBtn">Rectangle</button>
-            <button id="wallBtn">Wall</button>
-            <button id="doorBtn">Door</button>
-            <button id="windowBtn">Window</button>
-            <button id="clearBtn">Clear Canvas</button>
-            <div style="margin-top: 20px;">
-                <label>Width (ft):</label>
-                <input type="number" id="width" value="10">
-                <label>Height (ft):</label>
-                <input type="number" id="height" value="10">
+    <div class="app-container">
+        <div class="panel tools-panel">
+            <div class="panel-section">
+                <h2>Drawing Tools</h2>
+                <div class="tool-group">
+                    <button class="tool-button active" id="wallBtn" title="Wall Tool">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="3" y1="12" x2="21" y2="12"></line>
+                        </svg>
+                        Wall
+                    </button>
+                    <button class="tool-button" id="doorBtn" title="Door Tool">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M3 21h18V3H3v18zm4-9h10"></path>
+                            <path d="M7 12a2 2 0 0 0 2-2"></path>
+                        </svg>
+                        Door
+                    </button>
+                    <button class="tool-button" id="windowBtn" title="Window Tool">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="18" height="18"></rect>
+                            <line x1="3" y1="12" x2="21" y2="12"></line>
+                            <line x1="12" y1="3" x2="12" y2="21"></line>
+                        </svg>
+                        Window
+                    </button>
+                    <button class="tool-button" id="roomBtn" title="Room Tool">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="18" height="18"></rect>
+                        </svg>
+                        Room
+                    </button>
+                </div>
+            </div>
+
+            <div class="panel-section">
+                <h2>Dimensions</h2>
+                <div class="input-group">
+                    <label>Grid Size (ft)</label>
+                    <input type="number" id="gridSize" value="1" min="0.5" max="10" step="0.5">
+                </div>
+                <div class="input-group">
+                    <label>Scale (px/ft)</label>
+                    <input type="number" id="scale" value="20" min="10" max="50" step="5">
+                </div>
+            </div>
+
+            <div class="panel-section">
+                <h2>Actions</h2>
+                <button class="action-button" id="clearBtn">Clear Canvas</button>
+                <button class="action-button" id="undoBtn">Undo</button>
+                <button class="action-button" id="exportBtn">Export Blueprint</button>
             </div>
         </div>
+
         <div class="canvas-container">
-            <canvas id="canvas" width="800" height="600"></canvas>
+            <canvas id="canvas"></canvas>
+            <div class="canvas-controls">
+                <button class="control-button" id="zoomInBtn" title="Zoom In">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="16"></line>
+                        <line x1="8" y1="12" x2="16" y2="12"></line>
+                    </svg>
+                </button>
+                <button class="control-button" id="zoomOutBtn" title="Zoom Out">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="8" y1="12" x2="16" y2="12"></line>
+                    </svg>
+                </button>
+                <button class="control-button" id="panBtn" title="Pan Tool">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 19V5M5 12h14"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="status-bar">
+                <span id="coordinates">X: 0', Y: 0'</span>
+            </div>
+        </div>
+
+        <div class="panel properties-panel">
+            <div class="panel-section">
+                <h2>Properties</h2>
+                <div class="input-group">
+                    <label>Wall Thickness (in)</label>
+                    <input type="number" id="wallThickness" value="6" min="4" max="12" step="0.5">
+                </div>
+                <div class="input-group">
+                    <label>Door Width (ft)</label>
+                    <input type="number" id="doorWidth" value="3" min="2" max="8" step="0.5">
+                </div>
+                <div class="input-group">
+                    <label>Window Width (ft)</label>
+                    <input type="number" id="windowWidth" value="3" min="2" max="8" step="0.5">
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
+        // Initialize canvas and context
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
+
+        // Set canvas size to match container
+        function resizeCanvas() {
+            const container = canvas.parentElement;
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+            drawGrid();
+        }
+        
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // State management
+        let currentTool = 'wall';
         let isDrawing = false;
-        let currentTool = 'rectangle';
-        let startX, startY;
+        let startX = 0;
+        let startY = 0;
+        let scale = 20; // pixels per foot
+        let gridSize = 1; // feet
+        let zoom = 1;
+        let pan = { x: 0, y: 0 };
+        let elements = [];
+        let undoStack = [];
 
-        // Scale factor (1 foot = 20 pixels)
-        const SCALE = 20;
-
-        // Tool buttons
-        const tools = ['rectangle', 'wall', 'door', 'window'];
-        tools.forEach(tool => {
-            document.getElementById(`${tool}Btn`).addEventListener('click', () => {
-                currentTool = tool;
-                tools.forEach(t => {
-                    document.getElementById(`${t}Btn`).classList.remove('active');
-                });
-                document.getElementById(`${tool}Btn`).classList.add('active');
+        // Tool selection
+        document.querySelectorAll('.tool-button').forEach(button => {
+            button.addEventListener('click', () => {
+                document.querySelectorAll('.tool-button').forEach(b => b.classList.remove('active'));
+                button.classList.add('active');
+                currentTool = button.id.replace('Btn', '');
             });
         });
 
-        // Clear button
-        document.getElementById('clearBtn').addEventListener('click', () => {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            drawGrid();
-        });
-
-        // Draw grid
+        // Grid drawing with zoom and pan
         function drawGrid() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.save();
+            ctx.translate(pan.x, pan.y);
+            ctx.scale(zoom, zoom);
+
+            const gridPixels = gridSize * scale;
             ctx.strokeStyle = '#ddd';
             ctx.lineWidth = 0.5;
-            
-            for(let x = 0; x < canvas.width; x += SCALE) {
+
+            for (let x = 0; x < canvas.width / zoom; x += gridPixels) {
                 ctx.beginPath();
                 ctx.moveTo(x, 0);
-                ctx.lineTo(x, canvas.height);
+                ctx.lineTo(x, canvas.height / zoom);
                 ctx.stroke();
             }
-            
-            for(let y = 0; y < canvas.height; y += SCALE) {
+
+            for (let y = 0; y < canvas.height / zoom; y += gridPixels) {
                 ctx.beginPath();
                 ctx.moveTo(0, y);
-                ctx.lineTo(canvas.width, y);
+                ctx.lineTo(canvas.width / zoom, y);
                 ctx.stroke();
             }
+
+            // Draw all elements
+            elements.forEach(element => drawElement(element));
+
+            ctx.restore();
         }
 
-        // Mouse events
-        canvas.addEventListener('mousedown', startDrawing);
-        canvas.addEventListener('mousemove', draw);
-        canvas.addEventListener('mouseup', stopDrawing);
-
-        function startDrawing(e) {
-            isDrawing = true;
-            const rect = canvas.getBoundingClientRect();
-            startX = e.clientX - rect.left;
-            startY = e.clientY - rect.top;
-        }
-
-        function draw(e) {
-            if (!isDrawing) return;
-            
-            const rect = canvas.getBoundingClientRect();
-            const currentX = e.clientX - rect.left;
-            const currentY = e.clientY - rect.top;
-            
-            // Clear canvas and redraw grid
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            drawGrid();
-            
-            const width = currentX - startX;
-            const height = currentY - startY;
-            
-            ctx.lineWidth = 2;
-            
-            switch(currentTool) {
-                case 'rectangle':
-                    ctx.strokeStyle = '#000';
-                    ctx.strokeRect(startX, startY, width, height);
-                    break;
+        // Element drawing functions
+        function drawElement(element) {
+            switch(element.type) {
                 case 'wall':
-                    ctx.strokeStyle = '#000';
-                    ctx.lineWidth = 4;
-                    ctx.beginPath();
-                    ctx.moveTo(startX, startY);
-                    ctx.lineTo(currentX, currentY);
-                    ctx.stroke();
+                    drawWall(element);
                     break;
                 case 'door':
-                    ctx.strokeStyle = '#ff0000';
-                    drawDoor(startX, startY, currentX, currentY);
+                    drawDoor(element);
                     break;
                 case 'window':
-                    ctx.strokeStyle = '#0000ff';
-                    drawWindow(startX, startY, currentX, currentY);
+                    drawWindow(element);
+                    break;
+                case 'room':
+                    drawRoom(element);
                     break;
             }
-            
-            // Draw dimensions
-            drawDimensions(startX, startY, width, height);
         }
 
-        function drawDoor(x1, y1, x2, y2) {
-            const width = Math.abs(x2 - x1);
+        function drawWall(wall) {
+            const thickness = Number(document.getElementById('wallThickness').value) / 12 * scale;
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = thickness;
             ctx.beginPath();
-            ctx.moveTo(x1, y1);
-            ctx.lineTo(x1 + width, y1);
-            ctx.arc(x1, y1, width, 0, Math.PI/2, false);
+            ctx.moveTo(wall.x1, wall.y1);
+            ctx.lineTo(wall.x2, wall.y2);
             ctx.stroke();
         }
 
-        function drawWindow(x1, y1, x2, y2) {
-            const width = Math.abs(x2 - x1);
-            ctx.strokeRect(x1, y1, width, width/2);
-            // Add crosshair
+        function drawDoor(door) {
+            const width = Number(document.getElementById('doorWidth').value) * scale;
+            ctx.strokeStyle = '#ff0000';
+            ctx.lineWidth = 2;
+            
+            // Door arc
             ctx.beginPath();
-            ctx.moveTo(x1 + width/2, y1);
-            ctx.lineTo(x1 + width/2, y1 + width/2);
-            ctx.moveTo(x1, y1 + width/4);
-            ctx.lineTo(x1 + width, y1 + width/4);
+            ctx.moveTo(door.x1, door.y1);
+            ctx.arc(door.x1, door.y1, width, 0, Math.PI/2, false);
+            ctx.stroke();
+
+            // Door line
+            ctx.beginPath();
+            ctx.moveTo(door.x1, door.y1);
+            ctx.lineTo(door.x1 + width, door.y1);
             ctx.stroke();
         }
 
-        function drawDimensions(x, y, width, height) {
-            const ftWidth = Math.abs(Math.round(width/SCALE));
-            const ftHeight = Math.abs(Math.round(height/SCALE));
+        function drawWindow(window) {
+            const width = Number(document.getElementById('windowWidth').value) * scale;
+            ctx.strokeStyle = '#0000ff';
+            ctx.lineWidth = 2;
             
-            ctx.fillStyle = '#000';
-            ctx.font = '12px Arial';
-            ctx.fillText(`${ftWidth}'`, x + width/2, y - 5);
-            ctx.fillText(`${ftHeight}'`, x - 20, y + height/2);
+            // Window frame
+            ctx.strokeRect(window.x1, window.y1, width, width/2);
+            
+            // Window crosshair
+            ctx.beginPath();
+            ctx.moveTo(window.x1 + width/2, window.y1);
+            ctx.lineTo(window.x1 + width/2, window.y1 + width/2);
+            ctx.moveTo(window.x1, window.y1 + width/4);
+            ctx.lineTo(window.x1 + width, window.y1 + width/4);
+            ctx.stroke();
         }
 
-        function stopDrawing() {
-            isDrawing = false;
-        }
-
-        // Initial grid draw
-        drawGrid();
-    </script>
-</body>
-</html>
+        function drawRoom(room) {
+            ctx.strokeStyle
