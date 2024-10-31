@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple Blueprint Creator</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f0f0f0;
+        }
+        .container {
+            display: flex;
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .tools {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            width: 200px;
+        }
+        .canvas-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            flex-grow: 1;
+        }
+        canvas {
+            background: #fff;
+            border: 1px solid #ccc;
+        }
+        button {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .active {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="tools">
+            <h2>Tools</h2>
+            <button id="rectangleBtn">Rectangle</button>
+            <button id="wallBtn">Wall</button>
+            <button id="doorBtn">Door</button>
+            <button id="windowBtn">Window</button>
+            <button id="clearBtn">Clear Canvas</button>
+            <div style="margin-top: 20px;">
+                <label>Width (ft):</label>
+                <input type="number" id="width" value="10">
+                <label>Height (ft):</label>
+                <input type="number" id="height" value="10">
+            </div>
+        </div>
+        <div class="canvas-container">
+            <canvas id="canvas" width="800" height="600"></canvas>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        let isDrawing = false;
+        let currentTool = 'rectangle';
+        let startX, startY;
+
+        // Scale factor (1 foot = 20 pixels)
+        const SCALE = 20;
+
+        // Tool buttons
+        const tools = ['rectangle', 'wall', 'door', 'window'];
+        tools.forEach(tool => {
+            document.getElementById(`${tool}Btn`).addEventListener('click', () => {
+                currentTool = tool;
+                tools.forEach(t => {
+                    document.getElementById(`${t}Btn`).classList.remove('active');
+                });
+                document.getElementById(`${tool}Btn`).classList.add('active');
+            });
+        });
+
+        // Clear button
+        document.getElementById('clearBtn').addEventListener('click', () => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawGrid();
+        });
+
+        // Draw grid
+        function drawGrid() {
+            ctx.strokeStyle = '#ddd';
+            ctx.lineWidth = 0.5;
+            
+            for(let x = 0; x < canvas.width; x += SCALE) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+            }
+            
+            for(let y = 0; y < canvas.height; y += SCALE) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+        }
+
+        // Mouse events
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDrawing);
+
+        function startDrawing(e) {
+            isDrawing = true;
+            const rect = canvas.getBoundingClientRect();
+            startX = e.clientX - rect.left;
+            startY = e.clientY - rect.top;
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+            
+            const rect = canvas.getBoundingClientRect();
+            const currentX = e.clientX - rect.left;
+            const currentY = e.clientY - rect.top;
+            
+            // Clear canvas and redraw grid
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawGrid();
+            
+            const width = currentX - startX;
+            const height = currentY - startY;
+            
+            ctx.lineWidth = 2;
+            
+            switch(currentTool) {
+                case 'rectangle':
+                    ctx.strokeStyle = '#000';
+                    ctx.strokeRect(startX, startY, width, height);
+                    break;
+                case 'wall':
+                    ctx.strokeStyle = '#000';
+                    ctx.lineWidth = 4;
+                    ctx.beginPath();
+                    ctx.moveTo(startX, startY);
+                    ctx.lineTo(currentX, currentY);
+                    ctx.stroke();
+                    break;
+                case 'door':
+                    ctx.strokeStyle = '#ff0000';
+                    drawDoor(startX, startY, currentX, currentY);
+                    break;
+                case 'window':
+                    ctx.strokeStyle = '#0000ff';
+                    drawWindow(startX, startY, currentX, currentY);
+                    break;
+            }
+            
+            // Draw dimensions
+            drawDimensions(startX, startY, width, height);
+        }
+
+        function drawDoor(x1, y1, x2, y2) {
+            const width = Math.abs(x2 - x1);
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x1 + width, y1);
+            ctx.arc(x1, y1, width, 0, Math.PI/2, false);
+            ctx.stroke();
+        }
+
+        function drawWindow(x1, y1, x2, y2) {
+            const width = Math.abs(x2 - x1);
+            ctx.strokeRect(x1, y1, width, width/2);
+            // Add crosshair
+            ctx.beginPath();
+            ctx.moveTo(x1 + width/2, y1);
+            ctx.lineTo(x1 + width/2, y1 + width/2);
+            ctx.moveTo(x1, y1 + width/4);
+            ctx.lineTo(x1 + width, y1 + width/4);
+            ctx.stroke();
+        }
+
+        function drawDimensions(x, y, width, height) {
+            const ftWidth = Math.abs(Math.round(width/SCALE));
+            const ftHeight = Math.abs(Math.round(height/SCALE));
+            
+            ctx.fillStyle = '#000';
+            ctx.font = '12px Arial';
+            ctx.fillText(`${ftWidth}'`, x + width/2, y - 5);
+            ctx.fillText(`${ftHeight}'`, x - 20, y + height/2);
+        }
+
+        function stopDrawing() {
+            isDrawing = false;
+        }
+
+        // Initial grid draw
+        drawGrid();
+    </script>
+</body>
+</html>
