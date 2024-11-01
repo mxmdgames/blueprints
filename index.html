@@ -1,27 +1,77 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Blueprint Creator</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Professional Blueprint Creator</title>
     <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --danger: #dc2626;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            margin: 0;
-            padding: 20px;
             background: #f0f4f8;
+            color: var(--gray-700);
+            line-height: 1.5;
         }
+
+        .header {
+            background: white;
+            padding: 1rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .app-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--gray-700);
+        }
+
         .container {
             display: flex;
             gap: 20px;
             max-width: 1400px;
-            margin: 0 auto;
+            margin: 20px auto;
+            padding: 0 20px;
+            height: calc(100vh - 120px);
         }
+
         .tools {
             background: white;
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            width: 250px;
+            width: 300px;
+            overflow-y: auto;
         }
+
         .canvas-container {
             background: white;
             padding: 20px;
@@ -29,43 +79,78 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             flex-grow: 1;
             position: relative;
+            overflow: hidden;
         }
+
+        .canvas-wrapper {
+            position: relative;
+            overflow: auto;
+            height: 100%;
+        }
+
         canvas {
             background: #fff;
-            border: 1px solid #e0e0e0;
+            border: 1px solid var(--gray-200);
             cursor: crosshair;
         }
+
         .tool-button {
             width: 100%;
             padding: 10px;
             margin: 5px 0;
-            background: #2563eb;
+            background: var(--primary);
             color: white;
             border: none;
             border-radius: 4px;
             cursor: pointer;
-            transition: background 0.2s;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 14px;
         }
+
         .tool-button:hover {
-            background: #1d4ed8;
+            background: var(--primary-dark);
+            transform: translateY(-1px);
         }
+
         .tool-button.active {
-            background: #1e40af;
+            background: var(--primary-dark);
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
         }
+
+        .tool-button svg {
+            width: 16px;
+            height: 16px;
+        }
+
         .input-group {
             margin: 15px 0;
         }
+
         .input-group label {
             display: block;
             margin-bottom: 5px;
-            color: #4b5563;
+            color: var(--gray-600);
+            font-size: 14px;
         }
+
         .input-group input {
             width: 100%;
             padding: 8px;
-            border: 1px solid #d1d5db;
+            border: 1px solid var(--gray-300);
             border-radius: 4px;
+            transition: all 0.2s;
         }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+        }
+
         .coordinates {
             position: absolute;
             bottom: 10px;
@@ -74,38 +159,238 @@
             padding: 5px 10px;
             border-radius: 4px;
             font-size: 14px;
-            color: #4b5563;
+            color: var(--gray-600);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
+
         .section {
             margin-bottom: 20px;
             padding-bottom: 20px;
-            border-bottom: 1px solid #e5e7eb;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .section h3 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: var(--gray-700);
+        }
+
+        .toolbar {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            background: white;
+            padding: 5px;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .toolbar button {
+            background: white;
+            border: 1px solid var(--gray-300);
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 14px;
+            color: var(--gray-600);
+            transition: all 0.2s;
+        }
+
+        .toolbar button:hover {
+            background: var(--gray-100);
+            border-color: var(--gray-400);
+        }
+
+        .measurements {
+            position: absolute;
+            font-size: 12px;
+            color: var(--gray-600);
+            pointer-events: none;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .close-button {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--gray-500);
+        }
+
+        .status-message {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: white;
+            padding: 10px 20px;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: none;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .tooltip {
+            position: absolute;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            pointer-events: none;
+            z-index: 1000;
+            display: none;
         }
     </style>
 </head>
 <body>
+    <div class="header">
+        <div class="header-content">
+            <h1 class="app-title">Professional Blueprint Creator</h1>
+            <div class="toolbar">
+                <button id="exportBtn" title="Export as PNG">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="7 10 12 15 17 10"/>
+                        <line x1="12" y1="15" x2="12" y2="3"/>
+                    </svg>
+                    Export
+                </button>
+                <button id="saveBtn" title="Save Project">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                        <polyline points="17 21 17 13 7 13 7 21"/>
+                        <polyline points="7 3 7 8 15 8"/>
+                    </svg>
+                    Save
+                </button>
+                <button id="loadBtn" title="Load Project">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 15v4c0 1.1.9 2 2 2h14a2 2 0 0 0 2-2v-4"/>
+                        <polyline points="17 8 12 3 7 8"/>
+                        <line x1="12" y1="3" x2="12" y2="15"/>
+                    </svg>
+                    Load
+                </button>
+            </div>
+        </div>
+    </div>
+
     <div class="container">
         <div class="tools">
             <div class="section">
                 <h3>Drawing Tools</h3>
-                <button id="wallBtn" class="tool-button active">Wall</button>
-                <button id="doorBtn" class="tool-button">Door</button>
-                <button id="windowBtn" class="tool-button">Window</button>
+                <button id="wallBtn" class="tool-button active">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="3" y1="12" x2="21" y2="12"/>
+                    </svg>
+                    Wall
+                </button>
+                <button id="doorBtn" class="tool-button">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 3h18v18H3z"/>
+                        <path d="M12 3v18"/>
+                    </svg>
+                    Door
+                </button>
+                <button id="windowBtn" class="tool-button">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="18" height="18" rx="2"/>
+                        <line x1="3" y1="12" x2="21" y2="12"/>
+                        <line x1="12" y1="3" x2="12" y2="21"/>
+                    </svg>
+                    Window
+                </button>
+                <button id="dimensionBtn" class="tool-button">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                        <line x1="6" y1="18" x2="18" y2="6"/>
+                    </svg>
+                    Dimension
+                </button>
+                <button id="textBtn" class="tool-button">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M4 7V4h16v3"/>
+                        <path d="M12 4v16"/>
+                        <path d="M8 20h8"/>
+                    </svg>
+                    Text
+                </button>
             </div>
             
             <div class="section">
                 <h3>Properties</h3>
                 <div class="input-group">
                     <label>Wall Thickness (inches)</label>
-                    <input type="number" id="wallThickness" value="6" min="4" max="12">
+                    <input type="number" id="wallThickness" value="6" min="4" max="24" step="0.5">
                 </div>
                 <div class="input-group">
                     <label>Door Width (feet)</label>
-                    <input type="number" id="doorWidth" value="3" min="2" max="6">
+                    <input type="number" id="doorWidth" value="3" min="2" max="8" step="0.5">
+                </div>
+                <div class="input-group">
+                    <label>Door Height (feet)</label>
+                    <input type="number" id="doorHeight" value="7" min="6" max="10" step="0.5">
                 </div>
                 <div class="input-group">
                     <label>Window Width (feet)</label>
-                    <input type="number" id="windowWidth" value="3" min="2" max="6">
+                    <input type="number" id="windowWidth" value="3" min="2" max="8" step="0.5">
+                </div>
+                <div class="input-group">
+                    <label>Window Height (feet)</label>
+                    <input type="number" id="windowHeight" value="4" min="2" max="8" step="0.5">
+                </div>
+                <div class="input-group">
+                    <label>Window Sill Height (feet)</label>
+                    <input type="number" id="windowSill" value="3" min="0" max="6" step="0.5">
                 </div>
             </div>
 
@@ -115,222 +400,597 @@
                     <label>Grid Size (feet)</label>
                     <input type="number" id="gridSize" value="1" min="0.5" max="5" step="0.5">
                 </div>
+                <div class="input-group">
+                    <label>Scale (px per foot)</label>
+                    <input type="number" id="scale" value="20" min="10" max="50" step="5">
+                </div>
             </div>
 
-            <button id="clearBtn" class="tool-button" style="background: #dc2626;">Clear All</button>
-            <button id="undoBtn" class="tool-button" style="background: #4b5563;">Undo</button>
+            <div class="section">
+                <h3>Actions</h3>
+                <button id="clearBtn" class="tool-button" style="background: var(--danger);">Clear All</button>
+                <button id="undoBtn" class="tool-button" style<button id="undoBtn" class="tool-button" style="background: var(--gray-500);">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 7v6h6"/>
+                        <path d="M3 13c0-4.97 4.03-9 9-9a9 9 0 0 1 9 9 9 9 0 0 1-9 9 9 9 0 0 1-6-2.3"/>
+                    </svg>
+                    Undo
+                </button>
+                <button id="redoBtn" class="tool-button" style="background: var(--gray-500);">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 7v6h-6"/>
+                        <path d="M21 13c0-4.97-4.03-9-9-9a9 9 0 0 0-9 9 9 9 0 0 0 9 9 9 9 0 0 0 6-2.3"/>
+                    </svg>
+                    Redo
+                </button>
+            </div>
         </div>
 
         <div class="canvas-container">
-            <canvas id="canvas"></canvas>
-            <div class="coordinates" id="coordinates">0, 0</div>
+            <div class="canvas-wrapper">
+                <canvas id="canvas"></canvas>
+                <div id="measurements" class="measurements"></div>
+            </div>
+            <div class="coordinates" id="coordinates">0', 0'</div>
+            <div class="tooltip" id="tooltip"></div>
         </div>
     </div>
 
+    <div id="textModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Add Text</h2>
+                <button class="close-button">&times;</button>
+            </div>
+            <div class="input-group">
+                <label>Text Content</label>
+                <input type="text" id="textInput" placeholder="Enter text...">
+            </div>
+            <div class="input-group">
+                <label>Font Size (px)</label>
+                <input type="number" id="fontSize" value="14" min="8" max="48">
+            </div>
+            <button id="addTextBtn" class="tool-button">Add Text</button>
+        </div>
+    </div>
+
+    <div id="statusMessage" class="status-message"></div>
+
     <script>
-        const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
-        const SCALE = 20; // 1 foot = 20 pixels
-        let currentTool = 'wall';
-        let isDrawing = false;
-        let startX, startY;
-        let elements = [];
-        let undoHistory = [];
+        class BlueprintEditor {
+            constructor() {
+                this.canvas = document.getElementById('canvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.SCALE = Number(document.getElementById('scale').value);
+                this.currentTool = 'wall';
+                this.isDrawing = false;
+                this.startX = 0;
+                this.startY = 0;
+                this.elements = [];
+                this.undoStack = [];
+                this.redoStack = [];
+                this.selectedElement = null;
+                this.isDragging = false;
+                this.lastMousePos = { x: 0, y: 0 };
+                
+                this.initializeEventListeners();
+                this.resizeCanvas();
+                window.addEventListener('resize', () => this.resizeCanvas());
+            }
 
-        // Set canvas size
-        function resizeCanvas() {
-            const container = canvas.parentElement;
-            canvas.width = container.clientWidth - 42; // Adjust for padding
-            canvas.height = window.innerHeight - 100;
-            redraw();
-        }
+            initializeEventListeners() {
+                // Tool selection
+                document.querySelectorAll('.tool-button').forEach(button => {
+                    if (!button.id.includes('Btn')) return;
+                    button.addEventListener('click', () => this.handleToolSelection(button));
+                });
 
-        // Initialize canvas size
-        resizeCanvas();
-        window.addEventListener('resize', resizeCanvas);
+                // Canvas events
+                this.canvas.addEventListener('mousedown', (e) => this.startDrawing(e));
+                this.canvas.addEventListener('mousemove', (e) => this.draw(e));
+                this.canvas.addEventListener('mouseup', (e) => this.stopDrawing(e));
+                this.canvas.addEventListener('mousemove', (e) => this.updateCoordinates(e));
+                this.canvas.addEventListener('contextmenu', (e) => {
+                    e.preventDefault();
+                    this.handleContextMenu(e);
+                });
 
-        // Tool selection
-        document.querySelectorAll('.tool-button').forEach(button => {
-            if (!button.id.includes('Btn')) return;
-            button.addEventListener('click', () => {
+                // Input change events
+                document.getElementById('scale').addEventListener('change', () => {
+                    this.SCALE = Number(document.getElementById('scale').value);
+                    this.redraw();
+                });
+
+                // Export button
+                document.getElementById('exportBtn').addEventListener('click', () => this.exportCanvas());
+
+                // Save/Load buttons
+                document.getElementById('saveBtn').addEventListener('click', () => this.saveProject());
+                document.getElementById('loadBtn').addEventListener('click', () => this.loadProject());
+
+                // Text modal events
+                const textModal = document.getElementById('textModal');
+                document.getElementById('textBtn').addEventListener('click', () => {
+                    textModal.style.display = 'flex';
+                });
+                document.querySelector('.close-button').addEventListener('click', () => {
+                    textModal.style.display = 'none';
+                });
+                document.getElementById('addTextBtn').addEventListener('click', () => this.addText());
+            }
+
+            resizeCanvas() {
+                const container = this.canvas.parentElement;
+                this.canvas.width = container.clientWidth - 2; // Account for border
+                this.canvas.height = container.clientHeight - 2;
+                this.redraw();
+            }
+
+            handleToolSelection(button) {
                 if (button.id === 'clearBtn') {
-                    elements = [];
-                    redraw();
+                    if (confirm('Are you sure you want to clear all elements?')) {
+                        this.elements = [];
+                        this.undoStack = [];
+                        this.redoStack = [];
+                        this.redraw();
+                    }
                     return;
                 }
                 if (button.id === 'undoBtn') {
-                    if (elements.length > 0) {
-                        undoHistory.push(elements.pop());
-                        redraw();
-                    }
+                    this.undo();
+                    return;
+                }
+                if (button.id === 'redoBtn') {
+                    this.redo();
                     return;
                 }
                 document.querySelectorAll('.tool-button').forEach(b => b.classList.remove('active'));
                 button.classList.add('active');
-                currentTool = button.id.replace('Btn', '');
-            });
-        });
-
-        // Mouse event handlers
-        canvas.addEventListener('mousedown', startDrawing);
-        canvas.addEventListener('mousemove', draw);
-        canvas.addEventListener('mouseup', stopDrawing);
-        canvas.addEventListener('mousemove', updateCoordinates);
-
-        function getMousePos(e) {
-            const rect = canvas.getBoundingClientRect();
-            return {
-                x: e.clientX - rect.left,
-                y: e.clientY - rect.top
-            };
-        }
-
-        function snapToGrid(value) {
-            const gridPixels = Number(document.getElementById('gridSize').value) * SCALE;
-            return Math.round(value / gridPixels) * gridPixels;
-        }
-
-        function updateCoordinates(e) {
-            const pos = getMousePos(e);
-            const x = (pos.x / SCALE).toFixed(1);
-            const y = (pos.y / SCALE).toFixed(1);
-            document.getElementById('coordinates').textContent = `${x}', ${y}'`;
-        }
-
-        function startDrawing(e) {
-            isDrawing = true;
-            const pos = getMousePos(e);
-            startX = snapToGrid(pos.x);
-            startY = snapToGrid(pos.y);
-        }
-
-        function draw(e) {
-            if (!isDrawing) return;
-            
-            const pos = getMousePos(e);
-            const currentX = snapToGrid(pos.x);
-            const currentY = snapToGrid(pos.y);
-            
-            redraw();
-            
-            // Preview current drawing
-            switch(currentTool) {
-                case 'wall':
-                    drawWall(startX, startY, currentX, currentY);
-                    break;
-                case 'door':
-                    drawDoor(startX, startY, currentX, currentY);
-                    break;
-                case 'window':
-                    drawWindow(startX, startY, currentX, currentY);
-                    break;
+                this.currentTool = button.id.replace('Btn', '');
             }
-        }
 
-        function stopDrawing(e) {
-            if (!isDrawing) return;
-            
-            const pos = getMousePos(e);
-            const endX = snapToGrid(pos.x);
-            const endY = snapToGrid(pos.y);
-            
-            // Add new element
-            elements.push({
-                type: currentTool,
-                x1: startX,
-                y1: startY,
-                x2: endX,
-                y2: endY
-            });
-            
-            isDrawing = false;
-            redraw();
-        }
-
-        function drawWall(x1, y1, x2, y2) {
-            const thickness = Number(document.getElementById('wallThickness').value) / 12 * SCALE;
-            ctx.beginPath();
-            ctx.moveTo(x1, y1);
-            ctx.lineTo(x2, y2);
-            ctx.strokeStyle = '#000';
-            ctx.lineWidth = thickness;
-            ctx.stroke();
-        }
-
-        function drawDoor(x1, y1, x2, y2) {
-            const width = Number(document.getElementById('doorWidth').value) * SCALE;
-            const direction = x2 > x1 ? 1 : -1;
-            
-            ctx.beginPath();
-            ctx.moveTo(x1, y1);
-            ctx.lineTo(x1 + width * direction, y1);
-            ctx.strokeStyle = '#ff0000';
-            ctx.lineWidth = 2;
-            ctx.stroke();
-
-            ctx.beginPath();
-            ctx.arc(x1, y1, width, 0, Math.PI/2 * direction, direction < 0);
-            ctx.stroke();
-        }
-
-        function drawWindow(x1, y1, x2, y2) {
-            const width = Number(document.getElementById('windowWidth').value) * SCALE;
-            const height = width / 2;
-            
-            ctx.strokeStyle = '#0000ff';
-            ctx.lineWidth = 2;
-            
-            ctx.strokeRect(x1, y1, width, height);
-            
-            // Window cross
-            ctx.beginPath();
-            ctx.moveTo(x1 + width/2, y1);
-            ctx.lineTo(x1 + width/2, y1 + height);
-            ctx.moveTo(x1, y1 + height/2);
-            ctx.lineTo(x1 + width, y1 + height/2);
-            ctx.stroke();
-        }
-
-        function drawGrid() {
-            const gridSize = Number(document.getElementById('gridSize').value) * SCALE;
-            ctx.strokeStyle = '#ddd';
-            ctx.lineWidth = 0.5;
-            
-            for(let x = 0; x <= canvas.width; x += gridSize) {
-                ctx.beginPath();
-                ctx.moveTo(x, 0);
-                ctx.lineTo(x, canvas.height);
-                ctx.stroke();
+            getMousePos(e) {
+                const rect = this.canvas.getBoundingClientRect();
+                return {
+                    x: e.clientX - rect.left,
+                    y: e.clientY - rect.top
+                };
             }
-            
-            for(let y = 0; y <= canvas.height; y += gridSize) {
-                ctx.beginPath();
-                ctx.moveTo(0, y);
-                ctx.lineTo(canvas.width, y);
-                ctx.stroke();
-            }
-        }
 
-        function redraw() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            drawGrid();
-            elements.forEach(element => {
-                switch(element.type) {
+            snapToGrid(value) {
+                const gridPixels = Number(document.getElementById('gridSize').value) * this.SCALE;
+                return Math.round(value / gridPixels) * gridPixels;
+            }
+
+            updateCoordinates(e) {
+                const pos = this.getMousePos(e);
+                const x = (pos.x / this.SCALE).toFixed(1);
+                const y = (pos.y / this.SCALE).toFixed(1);
+                document.getElementById('coordinates').textContent = `${x}', ${y}'`;
+
+                // Update tooltip for hover effects
+                const element = this.findElementAtPosition(pos.x, pos.y);
+                const tooltip = document.getElementById('tooltip');
+                if (element) {
+                    tooltip.style.display = 'block';
+                    tooltip.style.left = (e.clientX + 10) + 'px';
+                    tooltip.style.top = (e.clientY + 10) + 'px';
+                    tooltip.textContent = this.getElementInfo(element);
+                } else {
+                    tooltip.style.display = 'none';
+                }
+            }
+
+            startDrawing(e) {
+                if (e.button === 2) return; // Right click
+                
+                this.isDrawing = true;
+                const pos = this.getMousePos(e);
+                this.startX = this.snapToGrid(pos.x);
+                this.startY = this.snapToGrid(pos.y);
+
+                // Check for element selection
+                const element = this.findElementAtPosition(pos.x, pos.y);
+                if (element) {
+                    this.selectedElement = element;
+                    this.isDragging = true;
+                    this.lastMousePos = pos;
+                }
+            }
+
+            draw(e) {
+                const pos = this.getMousePos(e);
+                const currentX = this.snapToGrid(pos.x);
+                const currentY = this.snapToGrid(pos.y);
+
+                if (this.isDragging && this.selectedElement) {
+                    // Handle element dragging
+                    const dx = currentX - this.lastMousePos.x;
+                    const dy = currentY - this.lastMousePos.y;
+                    this.moveElement(this.selectedElement, dx, dy);
+                    this.lastMousePos = { x: currentX, y: currentY };
+                    this.redraw();
+                    return;
+                }
+
+                if (!this.isDrawing) return;
+                
+                this.redraw();
+                
+                // Preview current drawing
+                switch(this.currentTool) {
                     case 'wall':
-                        drawWall(element.x1, element.y1, element.x2, element.y2);
+                        this.drawWall(this.startX, this.startY, currentX, currentY);
                         break;
                     case 'door':
-                        drawDoor(element.x1, element.y1, element.x2, element.y2);
+                        this.drawDoor(this.startX, this.startY, currentX, currentY);
                         break;
                     case 'window':
-                        drawWindow(element.x1, element.y1, element.x2, element.y2);
+                        this.drawWindow(this.startX, this.startY, currentX, currentY);
+                        break;
+                    case 'dimension':
+                        this.drawDimension(this.startX, this.startY, currentX, currentY);
                         break;
                 }
-            });
+            }
+
+            stopDrawing(e) {
+                if (!this.isDrawing) return;
+                
+                const pos = this.getMousePos(e);
+                const endX = this.snapToGrid(pos.x);
+                const endY = this.snapToGrid(pos.y);
+
+                if (this.isDragging) {
+                    this.isDragging = false;
+                    this.selectedElement = null;
+                    this.addToUndoStack();
+                } else if (Math.abs(endX - this.startX) > 5 || Math.abs(endY - this.startY) > 5) {
+                    // Add new element only if there's a significant drag
+                    this.elements.push({
+                        type: this.currentTool,
+                        x1: this.startX,
+                        y1: this.startY,
+                        x2: endX,
+                        y2: endY,
+                        properties: this.getCurrentProperties()
+                    });
+                    this.addToUndoStack();
+                }
+                
+                this.isDrawing = false;
+                this.redraw();
+            }
+
+            getCurrentProperties() {
+                return {
+                    wallThickness: Number(document.getElementById('wallThickness').value),
+                    doorWidth: Number(document.getElementById('doorWidth').value),
+                    doorHeight: Number(document.getElementById('doorHeight').value),
+                    windowWidth: Number(document.getElementById('windowWidth').value),
+                    windowHeight: Number(document.getElementById('windowHeight').value),
+                    windowSill: Number(document.getElementById('windowSill').value),
+                    fontSize: Number(document.getElementById('fontSize').value)
+                };
+            }
+
+            drawWall(x1, y1, x2, y2) {
+                const thickness = Number(document.getElementById('wallThickness').value) / 12 * this.SCALE;
+                this.ctx.beginPath();
+                this.ctx.moveTo(x1, y1);
+                this.ctx.lineTo(x2, y2);
+                this.ctx.strokeStyle = '#000';
+                this.ctx.lineWidth = thickness;
+                this.ctx.stroke();
+
+                // Draw dimension if needed
+                if (this.currentTool === 'wall') {
+                    const length = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2)) / this.SCALE;
+                    const midX = (x1 + x2) / 2;
+                    const midY = (y1 + y2) / 2;
+                    this.ctx.font = '12px sans-serif';
+                    this.ctx.fillStyle = '#000';
+                    this.ctx.fillText(`${length.toFixed(1)}'`, midX + 5, midY - 5);
+                }
+            }
+
+            drawDoor(x1, y1, x2, y2) {
+                const width = Number(document.getElementById('doorWidth').value) * this.SCALE;
+                const height = Number(document.getElementById('doorHeight').value) * this.SCALE;
+                const direction = x2 > x1 ? 1 : -1;
+                
+                // Door frame
+                this.ctx.beginPath();
+                this.ctx.moveTo(x1, y1);
+                this.ctx.lineTo(x1, y1 + height);
+                this.ctx.moveTo(x1, y1);
+                this.ctx.lineTo(x1 + width * direction, y1);
+                this.ctx.lineTo(x1 + width * direction, y1 + height);
+                this.ctx.strokeStyle = '#ff0000';
+                this.ctx.lineWidth = 2;
+                this.ctx.stroke();
+
+                // Door swing
+                this.ctx.beginPath();
+                this.ctx.arc(x1, y1, width, 0, Math.PI/2 * direction, direction < 0);
+                this.ctx.stroke();
+            }
+
+            drawWindow(x1, y1, x2, y2) {
+                const width = Number(document.getElementById('windowWidth').value) * this.SCALE;
+                const height = Number(document.getElementById('windowHeight').value) * this.SCALE;
+                const sillHeight = Number(document.getElementById('windowSill').value) * this.SCALE;
+                
+                this.ctx.strokeStyle = '#0000ff';
+                this.ctx.lineWidth = 2;
+                
+                // Window frame
+                this.ctx.strokeRect(x1, y1 + sillHeight, width, height);
+                
+                // Window cross
+                this.ctx.beginPath();
+                this.ctx.moveTo(x1 + width/2, y1 + sillHeight);
+                this.ctx.lineTo(x1 + width/2, y1 + sillHeight + height);
+                this.ctx.moveTo(x1, y1 + sillHeight + height/2);
+                this.ctx.lineTo(x1 + width, y1 + sillHeight + height/2);
+                this.ctx.stroke();
+
+                // Sill marking
+                this.ctx.beginPath();
+                this.ctx.moveTo(x1 - 5, y1 + sillHeight);
+                this.ctx.lineTo(x1 + width + 5, y1 + sillHeight);
+                this.ctx.stroke();
+            }
+
+            drawDimension(x1, y1, x2, y2) {
+                const length = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2)) / this.SCALE;
+                
+                this.ctx.beginPath();
+                this.ctx.moveTo(x1, y1);
+                this.ctx.lineTo(x2, y2);
+                this.ctx.strokeStyle = '#666';
+                this.ctx.lineWidth = 1;
+                this.ctx.setLineDash([5, 5]);
+                this.ctx.stroke();
+                this.ctx.setLineDash([]);
+
+                // Draw dimension text
+                const midX = (x1 + x2) / 2;
+                const midY = (y1 + y2) / 2;
+                this.ctx.font = '12px sans-serif';
+                this.ctx.fillStyle = '#666';
+                this.ctx.fillText(`${length.toFixed(this.ctx.fillText(`${length.toFixed(1)}'`, midX + 5, midY - 5);
+
+                // Draw dimension arrows
+                const angle = Math.atan2(y2 - y1, x2 - x1);
+                this.drawArrow(x1, y1, angle);
+                this.drawArrow(x2, y2, angle + Math.PI);
+            }
+
+            drawArrow(x, y, angle) {
+                const arrowLength = 10;
+                const arrowAngle = Math.PI / 6;
+                
+                this.ctx.beginPath();
+                this.ctx.moveTo(x, y);
+                this.ctx.lineTo(
+                    x + arrowLength * Math.cos(angle + arrowAngle),
+                    y + arrowLength * Math.sin(angle + arrowAngle)
+                );
+                this.ctx.moveTo(x, y);
+                this.ctx.lineTo(
+                    x + arrowLength * Math.cos(angle - arrowAngle),
+                    y + arrowLength * Math.sin(angle - arrowAngle)
+                );
+                this.ctx.strokeStyle = '#666';
+                this.ctx.lineWidth = 1;
+                this.ctx.stroke();
+            }
+
+            addText() {
+                const text = document.getElementById('textInput').value;
+                if (!text) return;
+
+                const fontSize = Number(document.getElementById('fontSize').value);
+                this.elements.push({
+                    type: 'text',
+                    x1: this.canvas.width / 2,
+                    y1: this.canvas.height / 2,
+                    text: text,
+                    properties: { fontSize }
+                });
+
+                document.getElementById('textModal').style.display = 'none';
+                document.getElementById('textInput').value = '';
+                this.addToUndoStack();
+                this.redraw();
+            }
+
+            drawText(element) {
+                this.ctx.font = `${element.properties.fontSize}px sans-serif`;
+                this.ctx.fillStyle = '#000';
+                this.ctx.fillText(element.text, element.x1, element.y1);
+            }
+
+            drawGrid() {
+                const gridSize = Number(document.getElementById('gridSize').value) * this.SCALE;
+                this.ctx.strokeStyle = '#ddd';
+                this.ctx.lineWidth = 0.5;
+                
+                for(let x = 0; x <= this.canvas.width; x += gridSize) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(x, 0);
+                    this.ctx.lineTo(x, this.canvas.height);
+                    this.ctx.stroke();
+                }
+                
+                for(let y = 0; y <= this.canvas.height; y += gridSize) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(0, y);
+                    this.ctx.lineTo(this.canvas.width, y);
+                    this.ctx.stroke();
+                }
+            }
+
+            redraw() {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                this.drawGrid();
+                
+                this.elements.forEach(element => {
+                    switch(element.type) {
+                        case 'wall':
+                            this.drawWall(element.x1, element.y1, element.x2, element.y2);
+                            break;
+                        case 'door':
+                            this.drawDoor(element.x1, element.y1, element.x2, element.y2);
+                            break;
+                        case 'window':
+                            this.drawWindow(element.x1, element.y1, element.x2, element.y2);
+                            break;
+                        case 'dimension':
+                            this.drawDimension(element.x1, element.y1, element.x2, element.y2);
+                            break;
+                        case 'text':
+                            this.drawText(element);
+                            break;
+                    }
+                });
+            }
+
+            findElementAtPosition(x, y) {
+                const hitRadius = 5;
+                return this.elements.find(element => {
+                    if (element.type === 'text') {
+                        return Math.abs(x - element.x1) <= hitRadius * 2 &&
+                               Math.abs(y - element.y1) <= hitRadius * 2;
+                    }
+                    
+                    const dx = element.x2 - element.x1;
+                    const dy = element.y2 - element.y1;
+                    const length = Math.sqrt(dx * dx + dy * dy);
+                    if (length === 0) return false;
+
+                    const t = ((x - element.x1) * dx + (y - element.y1) * dy) / (length * length);
+                    if (t < 0 || t > 1) return false;
+
+                    const projX = element.x1 + t * dx;
+                    const projY = element.y1 + t * dy;
+                    const distance = Math.sqrt(Math.pow(x - projX, 2) + Math.pow(y - projY, 2));
+                    
+                    return distance <= hitRadius;
+                });
+            }
+
+            moveElement(element, dx, dy) {
+                element.x1 += dx;
+                element.y1 += dy;
+                if (element.type !== 'text') {
+                    element.x2 += dx;
+                    element.y2 += dy;
+                }
+            }
+
+            getElementInfo(element) {
+                switch(element.type) {
+                    case 'wall':
+                        const length = Math.sqrt(
+                            Math.pow(element.x2 - element.x1, 2) +
+                            Math.pow(element.y2 - element.y1, 2)
+                        ) / this.SCALE;
+                        return `Wall: ${length.toFixed(1)}' long`;
+                    case 'door':
+                        return `Door: ${element.properties.doorWidth}' × ${element.properties.doorHeight}'`;
+                    case 'window':
+                        return `Window: ${element.properties.windowWidth}' × ${element.properties.windowHeight}', Sill: ${element.properties.windowSill}'`;
+                    case 'text':
+                        return `Text: "${element.text}"`;
+                    default:
+                        return element.type.charAt(0).toUpperCase() + element.type.slice(1);
+                }
+            }
+
+            addToUndoStack() {
+                this.undoStack.push(JSON.stringify(this.elements));
+                this.redoStack = [];
+            }
+
+            undo() {
+                if (this.undoStack.length === 0) return;
+                
+                this.redoStack.push(JSON.stringify(this.elements));
+                this.elements = JSON.parse(this.undoStack.pop());
+                this.redraw();
+                this.showStatus('Undo successful');
+            }
+
+            redo() {
+                if (this.redoStack.length === 0) return;
+                
+                this.undoStack.push(JSON.stringify(this.elements));
+                this.elements = JSON.parse(this.redoStack.pop());
+                this.redraw();
+                this.showStatus('Redo successful');
+            }
+
+            showStatus(message) {
+                const status = document.getElementById('statusMessage');
+                status.textContent = message;
+                status.style.display = 'block';
+                setTimeout(() => {
+                    status.style.display = 'none';
+                }, 2000);
+            }
+
+            exportCanvas() {
+                const link = document.createElement('a');
+                link.download = 'blueprint.png';
+                link.href = this.canvas.toDataURL('image/png');
+                link.click();
+                this.showStatus('Blueprint exported successfully');
+            }
+
+            saveProject() {
+                const data = {
+                    elements: this.elements,
+                    scale: this.SCALE,
+                    gridSize: Number(document.getElementById('gridSize').value)
+                };
+                const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+                const link = document.createElement('a');
+                link.download = 'blueprint.json';
+                link.href = URL.createObjectURL(blob);
+                link.click();
+                this.showStatus('Project saved successfully');
+            }
+
+            loadProject() {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = '.json';
+                input.onchange = (e) => {
+                    const file = e.target.files[0];
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        try {
+                            const data = JSON.parse(event.target.result);
+                            this.elements = data.elements;
+                            this.SCALE = data.scale;
+                            document.getElementById('scale').value = data.scale;
+                            document.getElementById('gridSize').value = data.gridSize;
+                            this.redraw();
+                            this.showStatus('Project loaded successfully');
+                        } catch (error) {
+                            this.showStatus('Error loading project');
+                        }
+                    };
+                    reader.readAsText(file);
+                };
+                input.click();
+            }
         }
 
-        // Initial draw
-        redraw();
+        // Initialize the blueprint editor
+        const editor = new BlueprintEditor();
     </script>
 </body>
 </html>
